@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv_py312/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# AWS credentials - NEVER commit these
+.aws/
+aws_credentials.txt
+*.aws
+
+# Streamlit
+.streamlit/secrets.toml
+
+# MongoDB connection strings
+mongodb_connection.txt
+
+# Videos directory (large files)
+videos/
+
+# Lambda layers (large dependencies - avoid committing)
+lambda_pymongo/
+lambda_layer/
+
+# Temporary files
+*.tmp
+*.log
+*.xlsx
+~$*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db

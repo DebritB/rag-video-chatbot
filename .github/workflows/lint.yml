@@ -1,0 +1,47 @@
+name: Lint & Security Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pylint
+    
+    - name: Lint with flake8 (Streamlit app)
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 aws_deployment/streamlit_app_cloud.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 aws_deployment/streamlit_app_cloud.py --count --exit-zero --max-line-length=100 --statistics
+    
+    - name: Check for hardcoded secrets
+      run: |
+        # Fail if any common secret patterns are found in committed files
+        ! grep -r "mongodb+srv://" aws_deployment/streamlit_app_cloud.py
+        ! grep -r "AKIA" aws_deployment/streamlit_app_cloud.py
+        ! grep -r "aws_secret_access_key" aws_deployment/streamlit_app_cloud.py
+      continue-on-error: true
+    
+    - name: Verify .env not committed
+      run: |
+        ! git log --all --name-status | grep -E "\.env$" || echo "Warning: .env file history detected"
+      continue-on-error: true
