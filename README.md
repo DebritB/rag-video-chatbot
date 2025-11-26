@@ -18,71 +18,131 @@ Complete AI pipeline for video transcript analysis and grading with two deployme
 
 ---
 
-## Quick Start: Cloud Deployment (Streamlit Cloud + AWS)
+## 🚀 Live Deployment (Cloud - Production Ready)
 
+**App is live and deployed!**
+
+### Access the App
+👉 **[https://rag-video-chatbot-dqqnj9ftvygvocemy69qkw.streamlit.app/](https://rag-video-chatbot-dqqnj9ftvygvocemy69qkw.streamlit.app/)**
+
+The app is deployed on Streamlit Cloud with AWS Lambda backend:
+- ✅ Queries MongoDB Atlas (244 videos indexed)
+- ✅ Uses AWS Bedrock (Claude 3 Haiku) for AI responses
+- ✅ No local resources needed - fully cloud-hosted
+- ✅ 24/7 availability
+
+### For Local Development
 See **[DEPLOYMENT_GUIDE.md](aws_deployment/DEPLOYMENT_GUIDE.md)** for full instructions.
 
-### Minimal Setup
+**To run locally:**
 ```bash
 # 1. Clone repo
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git && cd YOUR_REPO
+git clone https://github.com/DebritB/rag-video-chatbot.git && cd rag-video-chatbot
 
-# 2. Copy env template (local testing)
+# 2. Copy env template
 cp .env.example .env
-# Edit .env and add your Lambda API endpoint
+# Edit .env and add your Lambda API endpoint (from AWS Console)
 
-# 3. Run locally
+# 3. Run locally (uses same cloud backend)
+streamlit run streamlit_app.py
+
+# 4. Or modify to use local Ollama instead of Lambda
 cd aws_deployment
-streamlit run streamlit_app_cloud.py
+streamlit run streamlit_app_local.py  # (requires local Ollama setup)
+```
 
-# 4. Push to GitHub (credentials excluded via .gitignore)
-git add . && git commit -m "Deploy" && git push
-
-# 5. Deploy on Streamlit Cloud
-# - Go to streamlit.io
-# - Connect GitHub repo
-# - Add LAMBDA_API_ENDPOINT to Secrets
+### Architecture
+```
+User Query (Streamlit Cloud)
+    ↓
+AWS Lambda (Python 3.11)
+    ↓
+AWS Bedrock (Claude 3 Haiku)
+    ↓
+MongoDB Atlas (Vector Search)
+    ↓
+Response ✓
 ```
 
 ---
 
-## Quick Start
+## ✅ System Status
 
-### Prerequisites
-- ✅ Python 3.12 environment at `D:\HELP\.venv_py312`
-- ✅ NVIDIA GPU (RTX 4060) with CUDA 12.1
-- ✅ Ollama running with Mistral 7B model
-- ✅ MongoDB Atlas account with credentials
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Streamlit Cloud** | 🟢 LIVE | https://rag-video-chatbot-dqqnj9ftvygvocemy69qkw.streamlit.app/ |
+| **AWS Lambda** | 🟢 ACTIVE | `rag-bedrock-handler` (Python 3.11) |
+| **API Gateway** | 🟢 RUNNING | `/prod/chat` endpoint live |
+| **MongoDB Atlas** | 🟢 READY | 244 videos indexed with Vector Search |
+| **Bedrock (Claude 3)** | 🟢 CONNECTED | Ready for inference |
+| **GitHub Repo** | 🟢 SECURE | No credentials exposed, clean history |
 
-### Step 1: Transcribe Videos (If Not Done)
-```powershell
-cd D:\HELP
-D:\HELP\.venv_py312\Scripts\python.exe extract_and_transcribe.py
+---
+
+## Quick Start (Cloud - Already Deployed)
+
+### Just Use It! 🎉
+Simply visit: **[https://rag-video-chatbot-dqqnj9ftvygvocemy69qkw.streamlit.app/](https://rag-video-chatbot-dqqnj9ftvygvocemy69qkw.streamlit.app/)**
+
+No setup needed - ask questions about videos:
+- "What videos do I have?"
+- "Tell me about Q-learning"
+- "Find videos on grid world RL"
+
+### Local Development (Optional)
+
+**Prerequisites** (for local testing):
+- ✅ Python 3.11+
+- ✅ `.env` file with `LAMBDA_API_ENDPOINT` (uses cloud Lambda)
+- ✅ Internet connection
+
+**To modify the app locally:**
+```bash
+# Clone and setup
+git clone https://github.com/DebritB/rag-video-chatbot.git
+cd rag-video-chatbot
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your LAMBDA_API_ENDPOINT
+
+# Run locally (still uses cloud backend)
+streamlit run streamlit_app.py
 ```
-Output: `transcriptions.xlsx`
 
-### Step 2: Grade Transcripts
-```powershell
-D:\HELP\.venv_py312\Scripts\python.exe grade_transcripts.py
-```
-Output: `graded_videos.xlsx` (color-coded: RED = poor C2, YELLOW = long videos)
+### Original Local Pipeline (For Reference)
 
-### Step 3: Load into MongoDB (One-time setup)
-```powershell
-D:\HELP\.venv_py312\Scripts\python.exe rag_mongodb.py
-```
-This:
-- Loads `graded_videos.xlsx`
-- Generates HuggingFace embeddings for each video
-- Uploads to MongoDB Atlas with metadata
-- Takes ~3-5 minutes (embedding model ~100MB download on first run)
+If you want to re-transcribe/re-grade videos locally (requires GPU):
 
-### Step 4: Start Streamlit UI
+**Prerequisites**:
+- ✅ Python 3.12 environment
+- ✅ NVIDIA GPU with CUDA 12.1
+- ✅ Ollama with Mistral 7B
+- ✅ 20+ GB free disk space
+
+**Step 1: Transcribe Videos**
 ```powershell
-cd D:\HELP
-D:\HELP\.venv_py312\Scripts\streamlit run streamlit_app.py
+python extract_and_transcribe.py
+# Output: transcriptions.xlsx
 ```
-Opens at: http://localhost:8501
+
+**Step 2: Grade Transcripts**
+```powershell
+python grade_transcripts.py
+# Output: graded_videos.xlsx (color-coded)
+```
+
+**Step 3: Upload to MongoDB**
+```powershell
+python rag_mongodb.py
+# Generates embeddings & uploads to MongoDB Atlas
+# Takes ~3-5 minutes
+```
+
+**Step 4: Start Local UI (uses local Ollama)**
+```powershell
+streamlit run streamlit_app_local.py
+# Opens: http://localhost:8501
+```
 
 ---
 
