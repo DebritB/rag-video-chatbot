@@ -3,8 +3,40 @@ AWS Lambda handler for RAG chatbot queries using AWS Bedrock Claude + MongoDB Ve
 Production-ready: 
 - Uses MongoDB Atlas Vector Search (NOT client-side embeddings)
 - Lightweight dependencies (pymongo only)
-- Credentials from Secrets Manager
+- Credentials from environment variables
 - Bedrock Claude for LLM
+
+SETUP:
+------
+1. AWS Lambda Console → Configuration → Environment variables
+   - Add: MONGO_URI = "mongodb+srv://user:password@cluster.mongodb.net/video_grading"
+
+2. Attach pymongo layer (from lambda_layer/)
+   - Layers → Add layer → Select pymongo-layer-py311
+
+3. IAM Role permissions:
+   - bedrock:Converse
+   - bedrock:InvokeModel
+   - cloudwatch:PutMetricData (optional, for logging)
+
+USAGE:
+------
+Event format (from API Gateway):
+{
+  "user_input": "What is Q-learning?"
+}
+
+Response format:
+{
+  "statusCode": 200,
+  "body": {
+    "response": "Q-learning is...",
+    "status": "success",
+    "videos_used": [
+      {"id": "...", "video_name": "...", "duration": "12:34"}
+    ]
+  }
+}
 """
 
 import json
@@ -15,7 +47,6 @@ from pymongo import MongoClient
 
 # AWS clients
 bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
-secrets_client = boto3.client('secretsmanager', region_name='us-east-1')
 
 # Constants
 BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
@@ -23,34 +54,12 @@ DATABASE_NAME = "video_grading"
 COLLECTION_NAME = "videos"
 VECTOR_INDEX_NAME = "embedding_index"
 
-# Cache credentials to avoid repeated Secrets Manager calls
-_cached_mongo_uri = None
-
-
 def get_mongo_uri():
-    """Get MongoDB URI from Secrets Manager (cached), with optional env override."""
-    global _cached_mongo_uri
-
-    if _cached_mongo_uri:
-        return _cached_mongo_uri
-
-    # Optional: allow override via environment variable for debugging
-    env_uri = os.getenv("MONGO_URI")
-    if env_uri:
-        _cached_mongo_uri = env_uri.strip()
-        return _cached_mongo_uri
-
-    try:
-        response = secrets_client.get_secret_value(SecretId="MONGO_URI")
-        _cached_mongo_uri = response["SecretString"].strip()
-        return _cached_mongo_uri
-    except Exception as e:
-        print(f"Error fetching from Secrets Manager: {e}")
-        # Fallback for local/dev only – remove or replace in production.
-        fallback = None  # MONGO_URI must be set in environment or Secrets Manager
-        print("Using fallback Mongo URI (dev only).")
-        _cached_mongo_uri = fallback
-        return _cached_mongo_uri
+    """Get MongoDB URI from environment variables."""
+    mongo_uri = os.getenv("MONGO_URI")
+    if not mongo_uri:
+        raise ValueError("MONGO_URI environment variable not set!")
+    return mongo_uri.strip()
 
 
 def get_mongo_connection():
